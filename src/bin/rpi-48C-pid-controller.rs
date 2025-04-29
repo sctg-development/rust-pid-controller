@@ -53,7 +53,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     // Initialize I2C and ADC
     let i2c_dev = I2cdev::new("/dev/i2c-1")?;
     let mut adc = Ads1x1x::new_ads1115(i2c_dev, TargetAddr::default());
-    adc.set_full_scale_range(FullScaleRange::Within4_096V)?;
+    adc.set_full_scale_range(FullScaleRange::Within4_096V).unwrap();
     
     // Initialize PWM for heater control
     let mut pwm = Pwm::with_frequency(
@@ -156,14 +156,14 @@ fn main() -> Result<(), Box<dyn Error>> {
 }
 
 /// Read temperature from NTC thermistor via ADS1115 ADC
-fn read_temperature<I2C, E>(adc: &mut Ads1x1x<I2C, ads1x1x::mode::OneShot, ads1x1x::ic::Ads1115, TargetAddr>) 
+fn read_temperature<I2C, E>(adc: &mut Ads1x1x<I2C, ads1x1x::ic::Ads1115, ads1x1x::ic::Resolution16Bit, ads1x1x::mode::OneShot>) 
     -> Result<f32, Box<dyn Error>>
 where
-    I2C: embedded_hal::blocking::i2c::Write<Error = E> + embedded_hal::blocking::i2c::WriteRead<Error = E>,
+    I2C: embedded_hal::i2c::I2c<Error = E>,
     E: std::error::Error + 'static,
 {
     // Read raw ADC value
-    let raw_value = block!(adc.read(channel::SingleA0))?;
+    let raw_value = block!(adc.read(channel::SingleA0)).unwrap();
     
     // Convert raw value to voltage (ADS1115 is 16-bit signed, -32768 to +32767)
     let voltage = (raw_value as f32 / 32768.0) * REF_VOLTAGE;
