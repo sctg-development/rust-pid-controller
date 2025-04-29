@@ -150,6 +150,58 @@ Tests validate:
 - Starting point for embedded temperature control projects
 - Integration into hardware control systems
 
+## Raspberry Pi Implementation
+
+This project includes a specialized binary (`rpi-48C-pid-controller`) that implements the PID controller on Raspberry Pi hardware for precise temperature control at 48°C.
+
+### Hardware Setup
+
+- **Raspberry Pi** (any model with I2C and PWM)
+- **Texas Instruments ADS1115** ADC for temperature measurement
+- **NTC thermistor** (10kΩ @ 25°C, β=3950)
+- **Voltage divider** with 10kΩ series resistor
+- **4.096V precision voltage reference**
+- **10W heater element**
+- **MOSFET/transistor** for PWM control of the heater
+
+### Wiring Instructions
+
+1. **NTC Temperature Sensor:**
+   - Connect the 10kΩ series resistor from 4.096V reference to ADS1115 A0 input
+   - Connect the NTC thermistor from ADS1115 A0 input to GND
+   - Connect ADS1115 to Raspberry Pi I2C pins (SDA to GPIO2, SCL to GPIO3)
+
+2. **Heater Control:**
+   - Connect Raspberry Pi PWM0 (GPIO18) to MOSFET gate/transistor base
+   - Connect MOSFET drain/collector to heater and appropriate power supply
+
+### Building for Raspberry Pi
+
+```bash
+cargo build --target=arm-unknown-linux-gnueabihf --bin rpi-48C-pid-controller --features="rpi"
+```
+
+Transfer the compiled binary to your Raspberry Pi and run:
+
+```bash
+./rpi-48C-pid-controller
+```
+
+### Operation
+
+1. The controller first runs an autotuning process to determine optimal PID parameters
+2. After autotuning, it applies the tuned parameters to maintain a precise 48°C temperature
+3. Real-time temperature and control output are displayed continuously
+
+### Customization
+
+You can modify these parameters in `src/bin/rpi_controller.rs`:
+- `TARGET_TEMP`: Target temperature (default: 48.0°C)
+- `NTC_R25`: NTC resistance at 25°C (default: 10,000Ω)
+- `NTC_BETA`: NTC beta coefficient (default: 3950)
+- `SAMPLING_INTERVAL`: Temperature reading frequency (default: 1000ms)
+- `PWM_FREQUENCY`: PWM frequency for heater control (default: 1Hz)
+
 ## License
 
 MIT

@@ -14,4 +14,25 @@ path = "src/lib.rs"
 name = "pid-simulation"
 path = "src/bin/simulation.rs"
 
+[[bin]]
+name = "rpi-48C-pid-controller"
+path = "src/bin/rpi-48C-pid-controller.rs"
+
 [dependencies]
+# Optional dependencies for Raspberry Pi implementation
+ads1x1x = { version = "0.3.0", optional = true }
+rppal = { version = "0.22.1", optional = true }
+linux-embedded-hal = { version = "0.4.0", optional = true }
+embedded-hal = { version = "1.0.0", optional = true }
+nb = { version = "1.1", optional = true }
+
+[features]
+default = []
+rpi = ["ads1x1x", "rppal", "linux-embedded-hal", "embedded-hal", "nb"]
+
+[target.'cfg(target_arch = "arm")'.dependencies]
+ads1x1x = "0.3.0"
+rppal = "0.22.1"
+linux-embedded-hal = "0.4.0"
+embedded-hal = "1.0.0"
+nb = "1.0"
