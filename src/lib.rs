@@ -20,24 +20,21 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-use std::time::Duration;
-use std::thread;
-
 /// PID controller for temperature regulation
-struct PidController {
-    kp: f32,         // Proportional gain
-    ki: f32,         // Integral gain
-    kd: f32,         // Derivative gain
-    setpoint: f32,   // Target temperature
+pub struct PidController {
+    pub kp: f32,         // Proportional gain
+    pub ki: f32,         // Integral gain
+    pub kd: f32,         // Derivative gain
+    pub setpoint: f32,   // Target temperature
     integral: f32,   // Accumulated error
     prev_error: f32, // Previous error for derivative calculation
-    output_min: f32, // Minimum output value
-    output_max: f32, // Maximum output value
+    pub output_min: f32, // Minimum output value
+    pub output_max: f32, // Maximum output value
 }
 
 impl PidController {
     /// Create a new PID controller
-    fn new(kp: f32, ki: f32, kd: f32, setpoint: f32) -> Self {
+    pub fn new(kp: f32, ki: f32, kd: f32, setpoint: f32) -> Self {
         PidController {
             kp,
             ki,
@@ -51,7 +48,7 @@ impl PidController {
     }
 
     /// Calculate the control output based on current temperature
-    fn compute(&mut self, current_temp: f32, dt: f32) -> f32 {
+    pub fn compute(&mut self, current_temp: f32, dt: f32) -> f32 {
         let error = self.setpoint - current_temp;
         
         // Proportional term
@@ -72,31 +69,39 @@ impl PidController {
     }
     
     /// Set a new temperature setpoint
-    fn set_setpoint(&mut self, setpoint: f32) {
+    pub fn set_setpoint(&mut self, setpoint: f32) {
         self.setpoint = setpoint;
     }
     
     /// Update PID parameters
-    fn set_parameters(&mut self, kp: f32, ki: f32, kd: f32) {
+    pub fn set_parameters(&mut self, kp: f32, ki: f32, kd: f32) {
         self.kp = kp;
         self.ki = ki;
         self.kd = kd;
         self.integral = 0.0;  // Reset integral term when changing parameters
         self.prev_error = 0.0;
     }
+
+    /// Set output limits
+    pub fn set_output_limits(&mut self, min: f32, max: f32) {
+        if min < max {
+            self.output_min = min;
+            self.output_max = max;
+        }
+    }
 }
 
 /// Thermal model for simulation
-struct ThermalSystem {
+pub struct ThermalSystem {
     temperature: f32,      // Current temperature (°C)
-    ambient_temp: f32,     // Ambient temperature (°C)
-    thermal_capacity: f32, // Thermal capacity (J/°C)
-    heater_power: f32,     // Heater power (W)
-    heat_loss_coeff: f32,  // Heat loss coefficient (W/°C)
+    pub ambient_temp: f32,     // Ambient temperature (°C)
+    pub thermal_capacity: f32, // Thermal capacity (J/°C)
+    pub heater_power: f32,     // Heater power (W)
+    pub heat_loss_coeff: f32,  // Heat loss coefficient (W/°C)
 }
 
 impl ThermalSystem {
-    fn new(initial_temp: f32, ambient_temp: f32, thermal_capacity: f32, heater_power: f32, heat_loss_coeff: f32) -> Self {
+    pub fn new(initial_temp: f32, ambient_temp: f32, thermal_capacity: f32, heater_power: f32, heat_loss_coeff: f32) -> Self {
         ThermalSystem {
             temperature: initial_temp,
             ambient_temp,
@@ -107,7 +112,7 @@ impl ThermalSystem {
     }
     
     /// Update temperature based on heater duty cycle
-    fn update(&mut self, duty_cycle: f32, dt: f32) {
+    pub fn update(&mut self, duty_cycle: f32, dt: f32) {
         // Heat added by resistor (J)
         let heat_added = self.heater_power * duty_cycle * dt;
         
@@ -121,16 +126,16 @@ impl ThermalSystem {
         self.temperature += temp_change;
     }
     
-    fn get_temperature(&self) -> f32 {
+    pub fn get_temperature(&self) -> f32 {
         self.temperature
     }
 }
 
 /// Autotuner for PID parameters using relay feedback method (Åström-Hägglund)
-struct PidAutoTuner {
-    setpoint: f32,          // Target temperature
-    relay_amplitude: f32,   // Relay output amplitude (0.5 = 50% duty cycle variation)
-    noise_band: f32,        // Noise filter band
+pub struct PidAutoTuner {
+    pub setpoint: f32,          // Target temperature
+    pub relay_amplitude: f32,   // Relay output amplitude (0.5 = 50% duty cycle variation)
+    pub noise_band: f32,        // Noise filter band
     
     // State variables
     relay_output: f32,      // Current relay output
@@ -144,7 +149,7 @@ struct PidAutoTuner {
 }
 
 impl PidAutoTuner {
-    fn new(setpoint: f32, relay_amplitude: f32, noise_band: f32) -> Self {
+    pub fn new(setpoint: f32, relay_amplitude: f32, noise_band: f32) -> Self {
         PidAutoTuner {
             setpoint,
             relay_amplitude,
@@ -161,7 +166,7 @@ impl PidAutoTuner {
     }
     
     /// Process new temperature reading and update relay state
-    fn update(&mut self, temperature: f32, dt: f32) -> f32 {
+    pub fn update(&mut self, temperature: f32, dt: f32) -> f32 {
         if self.is_finished {
             return 0.5; // Return middle value when done
         }
@@ -212,7 +217,7 @@ impl PidAutoTuner {
     }
     
     /// Calculate PID parameters from collected data
-    fn get_pid_parameters(&self) -> Option<(f32, f32, f32)> {
+    pub fn get_pid_parameters(&self) -> Option<(f32, f32, f32)> {
         if !self.is_finished || self.peaks.len() < 2 || self.valleys.len() < 2 {
             return None;
         }
@@ -262,100 +267,16 @@ impl PidAutoTuner {
         Some((kp, ki, kd))
     }
     
-    fn is_autotuning_finished(&self) -> bool {
+    pub fn is_autotuning_finished(&self) -> bool {
         self.is_finished
     }
-}
-
-fn main() {
-    // Create thermal system simulation
-    // Starting at 25°C, ambient 22°C, 300J/°C heat capacity,
-    // 10W resistor, heat loss coefficient 0.1 W/°C
-    let mut thermal_system = ThermalSystem::new(25.0, 22.0, 300.0, 10.0, 0.1);
     
-    // Set temperature target
-    let setpoint = 48.0;
-    
-    // First, run autotuning process
-    println!("Starting autotuning process at setpoint {}°C", setpoint);
-    println!("Time(s) | Temperature(°C) | Output");
-    println!("--------|-----------------|-------");
-    
-    let mut auto_tuner = PidAutoTuner::new(setpoint, 0.4, 0.1);
-    
-    // Simulation parameters
-    let dt = 0.1; // time step in seconds
-    let sampling_interval = 1.0; // Read temperature every 1s
-    let mut elapsed_time = 0.0;
-    let mut next_sample_time = 0.0;
-    let mut duty_cycle = 0.0;
-    
-    // Run autotuning
-    while !auto_tuner.is_autotuning_finished() && elapsed_time < 3600.0 {
-        // Read temperature and update relay at sampling intervals
-        if elapsed_time >= next_sample_time {
-            let temperature = thermal_system.get_temperature();
-            duty_cycle = auto_tuner.update(temperature, sampling_interval);
-            
-            println!("{:6.1} | {:15.2} | {:6.3}", 
-                     elapsed_time, temperature, duty_cycle);
-            
-            next_sample_time += sampling_interval;
+    /// Set peak count required for tuning (default: 4)
+    pub fn set_peak_count(&mut self, count: usize) {
+        if count >= 2 {
+            self.peak_count = count;
         }
-        
-        // Update thermal system simulation
-        thermal_system.update(duty_cycle, dt);
-        elapsed_time += dt;
     }
-    
-    // Get tuned PID parameters
-    let parameters = auto_tuner.get_pid_parameters();
-    
-    let (kp, ki, kd) = match parameters {
-        Some((kp, ki, kd)) => {
-            println!("\nAutotuning complete!");
-            println!("Recommended PID parameters:");
-            println!("Kp = {:.3}", kp);
-            println!("Ki = {:.3}", ki);
-            println!("Kd = {:.3}", kd);
-            (kp, ki, kd)
-        },
-        None => {
-            println!("\nAutotuning failed, using default parameters");
-            (0.8, 0.05, 0.2) // Default parameters
-        }
-    };
-    
-    // Create PID controller with autotuned parameters
-    let mut pid = PidController::new(kp, ki, kd, setpoint);
-    
-    // Reset time and run normal simulation with tuned parameters
-    println!("\nStarting control with autotuned parameters:");
-    println!("Time(s) | Temperature(°C) | Duty Cycle");
-    println!("--------|-----------------|----------");
-    
-    elapsed_time = 0.0;
-    next_sample_time = 0.0;
-    let simulation_duration = 300.0;
-    
-    while elapsed_time < simulation_duration {
-        // Read temperature and update PID at sampling intervals
-        if elapsed_time >= next_sample_time {
-            let temperature = thermal_system.get_temperature();
-            duty_cycle = pid.compute(temperature, sampling_interval);
-            
-            println!("{:6.1} | {:15.2} | {:10.3}", 
-                     elapsed_time, temperature, duty_cycle);
-            
-            next_sample_time += sampling_interval;
-        }
-        
-        // Update thermal system simulation
-        thermal_system.update(duty_cycle, dt);
-        elapsed_time += dt;
-    }
-    
-    println!("\nSimulation complete!");
 }
 
 #[cfg(test)]

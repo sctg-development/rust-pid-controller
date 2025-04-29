@@ -1,12 +1,12 @@
 # PID Temperature Controller in Rust
 
-A simulation-based implementation of a PID controller for temperature regulation with automatic PID parameter tuning.
+A reusable PID controller implementation in Rust with simulation capabilities and automatic PID parameter tuning.
 
 ## Overview
 
-This project demonstrates a complete temperature control system using a PID (Proportional-Integral-Derivative) controller implemented in Rust. It includes:
+This project provides a complete temperature control system using a PID (Proportional-Integral-Derivative) controller implemented in Rust. It includes:
 
-- A PID controller implementation with configurable parameters
+- A reusable PID controller library with configurable parameters
 - A thermal system simulation modeling a heating element and thermal dynamics
 - An autotuning module that automatically determines optimal PID parameters
 - Comprehensive testing to validate controller behavior
@@ -23,6 +23,16 @@ The system simulates controlling the temperature of a thermal mass using a 10W h
   - Ambient temperature
 - **Automatic PID Tuning**: Relay-feedback method (Åström-Hägglund) to determine optimal control parameters
 - **Visualization**: Console-based output of temperature response and control signals
+
+## Project Structure
+
+- **Library**: Reusable components for PID control and thermal simulation
+  - `PidController`: The core PID controller logic
+  - `ThermalSystem`: Thermal model for simulating temperature dynamics
+  - `PidAutoTuner`: Automatic parameter tuning using relay feedback
+
+- **Binary**: Simulation tool to demonstrate the PID controller in action
+  - `pid-simulation`: Runs a complete thermal control simulation with autotuning
 
 ## How It Works
 
@@ -44,10 +54,37 @@ The system uses relay-feedback autotuning to determine optimal PID parameters:
 3. Using the Ziegler-Nichols method, it calculates optimal Kp, Ki, and Kd values
 4. The resulting parameters are applied to the PID controller
 
+## Using the Library
+
+Add this to your `Cargo.toml`:
+
+```toml
+[dependencies]
+pid_controller = { git = "https://github.com/sctg-development/rust-pid-controller.git" }
+```
+
+Example usage:
+
+```rust
+use pid_controller::{PidController, ThermalSystem};
+
+// Create a PID controller with parameters and setpoint
+let mut pid = PidController::new(0.5, 0.01, 0.2, 50.0);
+
+// Get the current temperature from your sensor
+let current_temp = 25.0;
+
+// Calculate control output (dt = time since last calculation in seconds)
+let dt = 1.0;
+let duty_cycle = pid.compute(current_temp, dt);
+
+// Use duty_cycle to control your heating element (0.0-1.0)
+```
+
 ## Running the Simulation
 
 ```bash
-cargo run
+cargo run --bin pid-simulation
 ```
 
 The output shows:
@@ -111,6 +148,7 @@ Tests validate:
 - Testing different PID tuning methods
 - Simulating thermal systems with various characteristics
 - Starting point for embedded temperature control projects
+- Integration into hardware control systems
 
 ## License
 

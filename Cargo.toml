@@ -2,5 +2,16 @@
 name = "rust-pid-controller"
 version = "0.1.0"
 edition = "2021"
+authors = ["Ronan LE MEILLAT for SCTG Development"]
+description = "A PID controller implementation in Rust"
+license = "MIT"
+
+[lib]
+name = "pid_controller"
+path = "src/lib.rs"
+
+[[bin]]
+name = "pid-simulation"
+path = "src/bin/simulation.rs"
 
 [dependencies]
